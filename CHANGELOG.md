@@ -1,6 +1,269 @@
 # Changelog
 
-All notable changes to `spatie/laravel-activitylog` will be documented in this file
+All notable changes to `vsrklabs/laravel-mongo-activitylog` will be documented in this file
+
+## Unreleased
+
+### Changed
+
+- Synced with upstream `spatie/laravel-activitylog` v5.1.5, including its new schema, action classes, buffering, config keys and API renames.
+- Require PHP 8.1+, Laravel 10.37.2+ (through Laravel 13), the MongoDB PHP extension and the official `mongodb/laravel-mongodb` package (`^5.8`).
+- Use `MongoDB\Laravel\*` namespaces for models, builders, relations and the schema blueprint.
+- Backport upstream's PHP 8.4 `array_find()` call and Laravel 11+ enum-cast signature so the v5 API runs on PHP 8.1 and Laravel 10.37.2+.
+- Store activities in the `activity_log` MongoDB collection and run the test suite against MongoDB.
+
+## 5.1.5 - 2026-11-13
+
+### What changed
+
+- Fix buffered logging for custom activity models with renamed timestamp columns, `UPDATED_AT = null`, or `$timestamps = false`.
+- Use Eloquent's timestamp handling when preparing buffered activities, preserving supplied dates and explicit null values.
+- Add database-backed regression tests for custom timestamp settings and delayed flushing.
+
+### Compatibility and release scope
+
+This release contains only the timestamp fix from #1481, backported onto 5.1.4. PHP ^8.4 and Laravel ^12.0 || ^13.0 support are unchanged. Other unreleased changes on main are not included.
+
+Thanks to @skybleak333 for https://github.com/spatie/laravel-activitylog/pull/1481.
+
+**Full changelog**: https://github.com/spatie/laravel-activitylog/compare/5.1.4...5.1.5
+
+## 5.1.4 - 2026-11-06
+
+### What changed
+
+- Fix buffered activities with different optional attributes failing to flush.
+- Insert consecutive activities with matching columns together, preserving logging order and database defaults for omitted columns.
+- Roll back all groups if an insert fails and retain the pending buffer for retry.
+- Clarify the buffering documentation and add public regression coverage.
+
+### Compatibility and release scope
+
+This is an isolated backport of #1480 onto 5.1.3. PHP ^8.4 and Laravel ^12.0 || ^13.0 support are unchanged. No public API or configuration changes are required.
+
+This release intentionally excludes other unreleased changes on main, including its Laravel 13.32 minimum requirement and transaction-logging changes.
+
+Validated with 192 tests (472 assertions), Pint, PHPStan, and all eight PHP 8.4/8.5 × Laravel 12/13 × lowest/stable dependency test lanes.
+
+Thanks to @AleksandrSpicyn for https://github.com/spatie/laravel-activitylog/pull/1480.
+
+**Full changelog**: https://github.com/spatie/laravel-activitylog/compare/5.1.3...5.1.4
+
+## 5.1.3 - 2026-10-19
+
+### What changed
+
+- Fix eager authentication and session resolution when registering activity callbacks during application boot.
+- Preserve explicit causers, including unsaved models and custom resolvers that return null.
+- Keep the causer available to tap() callbacks and preserve their changes, including anonymous logging.
+- Clear cached causer relations through Eloquent when selecting an anonymous causer.
+- Align the PHPUnit XML schema with the installed runner, retaining PHP 8.4/8.5 coverage with Laravel 12/Pest 4 and Laravel 13/Pest 5.
+
+#### Compatibility note
+
+No public APIs were removed and supported PHP/Laravel versions are unchanged. The default causer is now selected when log() is called, or before a tap() callback, rather than when the logger is constructed. If authentication changes between those calls, use causedBy() to retain a specific causer.
+
+Validated with 189 tests (467 assertions), the full eight-job dependency matrix, PHPStan, and Pint.
+
+Thanks to @artygrand for #1477.
+
+**Full changelog**: https://github.com/spatie/laravel-activitylog/compare/5.1.2...5.1.3
+
+## 5.1.2 - 2026-10-19
+
+### What changed
+
+- Move the Laravel Boost activitylog reference into an on-demand `activitylog-development` skill, with a short guideline and a direct-file fallback when skills are unavailable.
+- Complete the standalone skill examples.
+- Explicitly test PHP 8.4 and 8.5 with Laravel 12/Pest 4 and Laravel 13/Pest 5, including lowest and latest dependencies.
+- Run read-only Pint and PHPStan checks for fork pull requests and fix the authentication test fixture for current Laravel.
+
+No package runtime behavior or supported Laravel versions changed.
+
+**Full changelog**: https://github.com/spatie/laravel-activitylog/compare/5.1.1...5.1.2
+
+Thanks to @benddailey for #1475.
+
+## 5.1.1 - 2026-09-08
+
+Restores Laravel 12 support, which 5.1.0 dropped unintentionally.
+
+### What's Changed
+
+* Restore Laravel 12 support by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1473
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/5.1.0...5.1.1
+
+## 5.1.0 - 2026-08-12
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 2.5.0 to 3.0.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1454
+* Bump dependabot/fetch-metadata from 3.0.0 to 3.1.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1457
+* Optimize migration snippet to target only affected rows using JSON queries by @msonowal in https://github.com/spatie/laravel-activitylog/pull/1455
+* Bump actions/checkout from 3 to 7 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1462
+* Bump stefanzweifel/git-auto-commit-action from 5.2.0 to 7.2.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1463
+* Fix outdated docs subdomain links in requirements by @lazerg in https://github.com/spatie/laravel-activitylog/pull/1466
+* Fix composer.json homepage to point at this repository by @ademola-emmanuel in https://github.com/spatie/laravel-activitylog/pull/1467
+* Update pestphp/pest requirement from ^4.0 to ^5.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1468
+* Add BackedEnum support for log name by @alexanderkroneis in https://github.com/spatie/laravel-activitylog/pull/1461
+
+### New Contributors
+
+* @msonowal made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1455
+* @lazerg made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1466
+* @ademola-emmanuel made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1467
+* @alexanderkroneis made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1461
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/5.0.0...5.1.0
+
+## 5.0.0 - 2026-03-25
+
+### What's Changed
+
+* v5: PHP 8.4+, Laravel 11+, modernized API by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1452
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.12.3...5.0.0
+
+## 4.12.3 - 2026-03-24
+
+### What's Changed
+
+* Fix LogOptions closure preventing model serialization in queued listeners (#1453) by @morloderex
+
+## 4.12.2 - 2026-03-24
+
+### What's Changed
+
+* Use try/finally in withinBatch to close batch when callback throws (#1449) by @isaackaara
+
+## 4.12.1 - 2026-02-22
+
+### What's Changed
+
+* Bump actions/stale from 9.1.0 to 10.2.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1446
+* Fix activitylog cleanup to require integer days input by @sandeep728 in https://github.com/spatie/laravel-activitylog/pull/1448
+
+### New Contributors
+
+* @sandeep728 made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1448
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.12.0...4.12.1
+
+## 4.12.0 - 2026-02-21
+
+### What's Changed
+
+- Add Laravel 13 support
+
+## 4.11.0 - 2026-01-31
+
+### What's Changed
+
+* Update issue template by @AlexVanderbist in https://github.com/spatie/laravel-activitylog/pull/1410
+* Bump dependabot/fetch-metadata from 2.4.0 to 2.5.0 by @dependabot[bot] in https://github.com/spatie/laravel-activitylog/pull/1437
+* Fix issue where activity is `null` by @rojtjo in https://github.com/spatie/laravel-activitylog/pull/1439
+* fix logUnguarded() to respect Model::unguard() by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1444
+* check for empty logs after pipeline runs by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1443
+* fix subject() throwing exception for non-SoftDeletes models by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1442
+* fix tapActivity being called twice by @freekmurze in https://github.com/spatie/laravel-activitylog/pull/1441
+
+### New Contributors
+
+* @rojtjo made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1439
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.10.2...4.11.0
+
+## 4.10.2 - 2025-06-15
+
+### What's Changed
+
+* Update README.md by @alisalehi1380 in https://github.com/spatie/laravel-activitylog/pull/1380
+* Bump stefanzweifel/git-auto-commit-action from 5.1.0 to 5.2.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1385
+* Bump dependabot/fetch-metadata from 2.3.0 to 2.4.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1392
+
+### New Contributors
+
+* @alisalehi1380 made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1380
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.10.1...4.10.2
+
+## 4.10.1 - 2025-02-10
+
+### What's Changed
+
+* Laravel 12.x Support by @erikn69 in https://github.com/spatie/laravel-activitylog/pull/1370
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.10.0...4.10.1
+
+## 4.10.0 - 2025-02-10
+
+### What's Changed
+
+* Bump stefanzweifel/git-auto-commit-action from 5.0.1 to 5.1.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1365
+* Bump actions/stale from 9.0.0 to 9.1.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1367
+* Bump dependabot/fetch-metadata from 2.2.0 to 2.3.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1368
+* Activity Facade by @stevebauman in https://github.com/spatie/laravel-activitylog/pull/1372
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.9.1...4.10.0
+
+## 4.9.1 - 2024-11-18
+
+### What's Changed
+
+* Update using-multiple-logs.md by @tobischulz in https://github.com/spatie/laravel-activitylog/pull/1345
+* fix: php 8.4 deprecation warnings by @ashleyshenton in https://github.com/spatie/laravel-activitylog/pull/1351
+
+### New Contributors
+
+* @tobischulz made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1345
+* @ashleyshenton made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1351
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.9.0...4.9.1
+
+## 4.9.0 - 2024-10-18
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 1.6.0 to 2.1.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1298
+* Bump stefanzweifel/git-auto-commit-action from 4.15.4 to 5.0.1 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1293
+* Corrected the link to the event logging example by @makaronnik in https://github.com/spatie/laravel-activitylog/pull/1300
+* Bump dependabot/fetch-metadata from 2.1.0 to 2.2.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1315
+* Update batch-logs.md by @jesseschutt in https://github.com/spatie/laravel-activitylog/pull/1320
+* Adjust PHPDoc type for causer and subject by @gtg-bantonio in https://github.com/spatie/laravel-activitylog/pull/1321
+* Add missing return type by @dwightwatson in https://github.com/spatie/laravel-activitylog/pull/1330
+* Possibility to define table name in environment file by @edwinvdpol in https://github.com/spatie/laravel-activitylog/pull/1334
+
+### New Contributors
+
+* @makaronnik made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1300
+* @jesseschutt made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1320
+* @gtg-bantonio made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1321
+* @edwinvdpol made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1334
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.8.0...4.9.0
+
+## 4.8.0 - 2024-03-08
+
+### What's Changed
+
+* Bump dependabot/fetch-metadata from 1.3.6 to 1.4.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1183
+* Bump dependabot/fetch-metadata from 1.4.0 to 1.5.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1195
+* Bump dependabot/fetch-metadata from 1.5.0 to 1.5.1 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1196
+* Bump dependabot/fetch-metadata from 1.5.1 to 1.6.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1205
+* Add a missing apostrophe by @dwightwatson in https://github.com/spatie/laravel-activitylog/pull/1249
+* Bump actions/stale from 6.0.1 to 9.0.0 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1250
+* Bump actions/cache from 3 to 4 by @dependabot in https://github.com/spatie/laravel-activitylog/pull/1263
+* Add more detail to manipulating changes by @tonypartridge in https://github.com/spatie/laravel-activitylog/pull/1268
+* feat!: add laravel 11 support by @StevePorter92 in https://github.com/spatie/laravel-activitylog/pull/1276
+
+### New Contributors
+
+* @dwightwatson made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1249
+* @tonypartridge made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1268
+* @StevePorter92 made their first contribution in https://github.com/spatie/laravel-activitylog/pull/1276
+
+**Full Changelog**: https://github.com/spatie/laravel-activitylog/compare/4.7.3...4.8.0
 
 ## 4.7.3 - 2023-01-25
 
@@ -154,11 +417,17 @@ PR: [#787](https://github.com/spatie/laravel-activitylog/pull/787)
 Special thanks to [Ahmed Nagi](https://github.com/nagi1).
 
 - Drop Laravel 6 and 7 support.
+  
 - Drop PHP 7.x support.
+  
 - Add `LogOptions` configuration object to replace all configuration properties.
+  
 - Add ability to batch activity logs [#560](https://github.com/spatie/laravel-activitylog/issues/560)
+  
 - Add Pipeline to customize logged changes data.
+  
 - - Deep diff array/JSON sub-keys and respect for only-dirty, no-empty ... [#692](https://github.com/spatie/laravel-activitylog/issues/692) using new pipeline. See implementation in the tests.
+  
 - 
 - 
 - 
@@ -171,6 +440,7 @@ Special thanks to [Ahmed Nagi](https://github.com/nagi1).
 - 
 - 
 - Implement a `CauserResolver` to define causer for current runtime [#582](https://github.com/spatie/laravel-activitylog/issues/582).
+  
 
 ## 3.17.0 - 2021-03-02
 

@@ -3,8 +3,8 @@
 namespace Spatie\Activitylog\Test\Models;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Jenssegers\Mongodb\Eloquent\Model;
-use Spatie\Activitylog\Traits\CausesActivity;
+use MongoDB\Laravel\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\CausesActivity;
 
 class User extends Model implements Authenticatable
 {
@@ -28,9 +28,14 @@ class User extends Model implements Authenticatable
         return $this->attributes[$name];
     }
 
+    public function getAuthPasswordName()
+    {
+        return 'password';
+    }
+
     public function getAuthPassword()
     {
-        return $this->attributes['password'];
+        return $this->getAttribute($this->getAuthPasswordName());
     }
 
     public function getRememberToken()
@@ -38,9 +43,7 @@ class User extends Model implements Authenticatable
         return 'token';
     }
 
-    public function setRememberToken($value): void
-    {
-    }
+    public function setRememberToken($value) {}
 
     public function getRememberTokenName()
     {

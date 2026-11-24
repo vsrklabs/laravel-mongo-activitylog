@@ -2,8 +2,8 @@
 
 namespace Spatie\Activitylog\Test\Models;
 
-use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class ArticleWithLogDescriptionClosure extends Article
 {
@@ -12,6 +12,8 @@ class ArticleWithLogDescriptionClosure extends Article
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->setDescriptionForEvent(fn ($eventName) => $eventName);
+            ->setDescriptionForEvent(function ($eventName) {
+                return $eventName;
+            });
     }
 }

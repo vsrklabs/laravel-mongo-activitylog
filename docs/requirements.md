@@ -3,8 +3,8 @@ title: Requirements
 weight: 3
 ---
 
-The activitylog package requires **PHP 7.1+** and **Laravel 5.2 or higher**.
+This version requires **PHP 8.1+**, **Laravel 10.37.2 or higher** (through Laravel 13), the **MongoDB PHP extension** and the official [`mongodb/laravel-mongodb`](https://github.com/mongodb/laravel-mongodb) package (`^5.8`).
 
-The latest version requires **PHP 8.0+** and **Laravel 8 or higher**.
+The MongoDB driver conflicts with `illuminate/bus` older than 10.37.2, which sets the effective Laravel 10 floor. Models used with this package should extend `MongoDB\Laravel\Eloquent\Model`, and the published migration uses `MongoDB\Laravel\Schema\Blueprint`.
 
-If you're stuck on older version of the framework take a look at [v3](https://docs.spatie.be/laravel-activitylog/v3), [v2](https://docs.spatie.be/laravel-activitylog/v2) or [v1](https://docs.spatie.be/laravel-activitylog/v2) of this package.
+This fork backports upstream v5's API to PHP 8.1 and Laravel 10; upstream v5 itself requires PHP 8.4 and Laravel 13.

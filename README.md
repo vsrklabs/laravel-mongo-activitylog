@@ -1,19 +1,25 @@
+<div align="left">
+    <a href="https://spatie.be/open-source?utm_source=github&utm_medium=banner&utm_campaign=laravel-activitylog">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://spatie.be/packages/header/laravel-activitylog/html/dark.webp">
+        <img alt="Logo for laravel-activitylog" src="https://spatie.be/packages/header/laravel-activitylog/html/light.webp">
+      </picture>
+    </a>
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/support-ukraine.svg?t=1" />](https://supportukrainenow.org)
+<h1>Log activity inside your Laravel app</h1>
 
-<p align="center"><img src="/art/socialcard.png" alt="Social Card of Laravel Activity Log"></p>
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/vsrklabs/laravel-mongo-activitylog.svg?style=flat-square)](https://packagist.org/packages/vsrklabs/laravel-mongo-activitylog)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/vsrklabs/laravel-mongo-activitylog/run-tests.yml?branch=main&label=Tests)](https://github.com/vsrklabs/laravel-mongo-activitylog/actions/workflows/run-tests.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/vsrklabs/laravel-mongo-activitylog.svg?style=flat-square)](https://packagist.org/packages/vsrklabs/laravel-mongo-activitylog)
+    
+</div>
 
-# Log activity inside your Laravel app
+The `vsrklabs/laravel-mongo-activitylog` package provides easy to use functions to log the activities of the users of your app. It can also automatically log model events.
+The package stores all activity in the `activity_log` MongoDB collection.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/spatie/laravel-activitylog.svg?style=flat-square)](https://packagist.org/packages/spatie/laravel-activitylog)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/spatie/laravel-activitylog/run-tests.yml?branch=main&label=Tests)](https://github.com/spatie/laravel-activitylog/actions/workflows/run-tests.yml)
-[![Check & fix styling](https://github.com/spatie/laravel-activitylog/workflows/Check%20&%20fix%20styling/badge.svg)](https://github.com/spatie/laravel-activitylog/actions/workflows/php-cs-fixer.yml)
-[![Total Downloads](https://img.shields.io/packagist/dt/spatie/laravel-activitylog.svg?style=flat-square)](https://packagist.org/packages/spatie/laravel-activitylog)
+It is based on `spatie/laravel-activitylog` v5 and stores activity in MongoDB through the official [Laravel MongoDB](https://github.com/mongodb/laravel-mongodb) package (`mongodb/laravel-mongodb`). Models used with this package should extend `MongoDB\Laravel\Eloquent\Model`.
 
-The `vsrklabs/laravel-mongo-activitylog` package provides easy to use functions to log the activities of the users of your app. It can also automatically log model events. 
-The Package stores all activity in the `activity_log` table.
-
-It is inspired from laravel-activitylog. Same code same everything but it is compatible with [laravel-mongodb](https://github.com/jenssegers/laravel-mongodb)
+Supported versions: PHP 8.1+, Laravel 10.37.2 through 13, and `mongodb/laravel-mongodb ^5.8`. The v5 API is backported so Laravel 10 remains supported even though upstream v5 requires PHP 8.4 and Laravel 13.
 
 Here's a demo of how you can use it:
 
@@ -40,7 +46,7 @@ $lastLoggedActivity = Activity::all()->last();
 
 $lastLoggedActivity->subject; //returns an instance of an eloquent model
 $lastLoggedActivity->causer; //returns an instance of your user model
-$lastLoggedActivity->getExtraProperty('customProperty'); //returns 'customValue'
+$lastLoggedActivity->getProperty('customProperty'); //returns 'customValue'
 $lastLoggedActivity->description; //returns 'Look, I logged something'
 ```
 
@@ -57,24 +63,24 @@ $activity->description; //returns 'updated'
 $activity->subject; //returns the instance of NewsItem that was saved
 ```
 
-Calling `$activity->changes()` will return this array:
+Calling `$activity->attribute_changes` will return this collection:
 
 ```php
 [
    'attributes' => [
         'name' => 'updated name',
-        'text' => 'Lorum',
+        'text' => 'Lorem',
     ],
     'old' => [
         'name' => 'original name',
-        'text' => 'Lorum',
+        'text' => 'Lorem',
     ],
 ];
 ```
 
 ## Support us
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-activitylog.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-activitylog)
+[<img src="https://spatie.be/github-ad-image/laravel-activitylog.jpg" width="419px" />](https://spatie.be/github-ad-click/laravel-activitylog)
 
 We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
 
@@ -82,9 +88,9 @@ We highly appreciate you sending us a postcard from your hometown, mentioning wh
 
 ## Documentation
 
-You'll find the documentation on [https://spatie.be/docs/laravel-activitylog/introduction](https://spatie.be/docs/laravel-activitylog/introduction).
+You'll find the upstream documentation on [https://spatie.be/docs/laravel-activitylog/introduction](https://spatie.be/docs/laravel-activitylog/introduction). MongoDB-specific notes are kept in this repository's `docs/` folder.
 
-Find yourself stuck using the package? Found a bug? Do you have general questions or suggestions for improving the activity log? Feel free to [create an issue on GitHub](https://github.com/spatie/laravel-activitylog/issues), we'll try to address it as soon as possible.
+Find yourself stuck using the package? Found a bug? Do you have general questions or suggestions for improving the activity log? Feel free to [create an issue on GitHub](https://github.com/vsrklabs/laravel-mongo-activitylog/issues), we'll try to address it as soon as possible.
 
 ## Installation
 
@@ -96,13 +102,15 @@ composer require vsrklabs/laravel-mongo-activitylog
 
 The package will automatically register itself.
 
+Configure a `mongodb` connection in your application's `config/database.php` and make it the default connection (or use a custom Activity model with its own `$connection`). The published migration uses `MongoDB\Laravel\Schema\Blueprint` to create the `activity_log` collection.
+
 You can publish the migration with:
 
 ```bash
 php artisan vendor:publish --provider="Spatie\Activitylog\ActivitylogServiceProvider" --tag="activitylog-migrations"
 ```
 
-_Note_: The default migration assumes you are using integers for your model IDs. If you are using UUIDs, or some other format, adjust the format of the subject_id and causer_id fields in the published migration before continuing.
+_Note_: The default migration assumes you are using integers for your model IDs. If you are using UUIDs, or some other format, adjust the format of the `subject_id` and `causer_id` fields in the published migration before continuing.
 
 After publishing the migration you can create the `activity_log` table by running the migrations:
 
@@ -126,8 +134,10 @@ Please see [UPGRADING](UPGRADING.md) for details.
 
 ## Testing
 
+The test suite needs a MongoDB server, preferably started as a replica set because the transaction tests use multi-document transactions.
+
 ```bash
-composer test
+MONGODB_URI=mongodb://127.0.0.1:27017 MONGODB_DATABASE=activitylog_test composer test
 ```
 
 ## Contributing
@@ -145,7 +155,7 @@ If you've found a bug regarding security please mail [security@spatie.be](mailto
 -   [Tom Witkowski](https://github.com/Gummibeer)
 -   [All Contributors](../../contributors)
 
-And a special thanks to [Caneco](https://twitter.com/caneco) for the logo and [Ahmed Nagi](https://github.com/nagi1) for all the work he put in `v4`.
+Special thanks to [Ahmed Nagi](https://github.com/nagi1) for all the work he put in `v4` and to [Caneco](https://twitter.com/caneco) for the original logo.
 
 ## License
 

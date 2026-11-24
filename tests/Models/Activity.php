@@ -2,34 +2,30 @@
 
 namespace Spatie\Activitylog\Test\Models;
 
-use Jenssegers\Mongodb\Eloquent\Builder;
-use Jenssegers\Mongodb\Eloquent\Model;
-use Jenssegers\Mongodb\Relations\MorphTo;
+use BackedEnum;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
+use MongoDB\Laravel\Eloquent\Builder;
+use MongoDB\Laravel\Eloquent\Model;
+use MongoDB\Laravel\Relations\MorphTo;
 use Spatie\Activitylog\Contracts\Activity as ActivityContract;
+use Spatie\Activitylog\Enums\ActivityEvent;
 
 class Activity extends Model implements ActivityContract
 {
-    protected $table;
+    protected $table = 'activity_log';
 
     public $guarded = [];
 
     protected $casts = [
+        'attribute_changes' => 'collection',
         'properties' => 'collection',
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        $this->table = config('activitylog.table_name');
-
-        parent::__construct($attributes);
-    }
-
     public function subject(): MorphTo
     {
-        if (config('activitylog.subject_returns_soft_deleted_models')) {
-            return $this->morphTo()->withTrashed();
+        if (config('activitylog.include_soft_deleted_subjects')) {
+            return $this->morphTo()->withoutGlobalScope(SoftDeletingScope::class);
         }
 
         return $this->morphTo();
@@ -40,27 +36,22 @@ class Activity extends Model implements ActivityContract
         return $this->morphTo();
     }
 
-    public function getExtraProperty(string $propertyName, mixed $defaultValue = null): mixed
+    public function getProperty(string $propertyName, mixed $defaultValue = null): mixed
     {
-        return Arr::get($this->properties->toArray(), $propertyName, $defaultValue);
+        return Arr::get($this->properties?->toArray() ?? [], $propertyName, $defaultValue);
     }
 
-    public function changes(): Collection
-    {
-        if (! $this->properties instanceof Collection) {
-            return new Collection();
-        }
-
-        return collect(array_filter($this->properties->toArray(), fn ($key) => in_array($key, ['attributes', 'old']), ARRAY_FILTER_USE_KEY));
-    }
-
-    public function scopeInLog(Builder $query, ...$logNames): Builder
+    /** @param  BackedEnum|string|array<BackedEnum|string>  ...$logNames */
+    public function scopeInLog(Builder $query, BackedEnum|string|array ...$logNames): Builder
     {
         if (is_array($logNames[0])) {
             $logNames = $logNames[0];
         }
 
-        return $query->whereIn('log_name', $logNames);
+        return $query->whereIn('log_name', array_map(
+            fn (BackedEnum|string $logName) => $logName instanceof BackedEnum ? $logName->value : $logName,
+            $logNames,
+        ));
     }
 
     public function scopeCausedBy(Builder $query, Model $causer): Builder
@@ -77,13 +68,13 @@ class Activity extends Model implements ActivityContract
             ->where('subject_id', $subject->getKey());
     }
 
-    public function scopeForEvent(Builder $query, string $event): Builder
+    public function scopeForEvent(Builder $query, string|ActivityEvent $event): Builder
     {
-        return $query->where('event', $event);
+        return $query->where('event', $event instanceof ActivityEvent ? $event->value : $event);
     }
 
     public function getCustomPropertyAttribute()
     {
-        return $this->changes();
+        return $this->attribute_changes;
     }
 }

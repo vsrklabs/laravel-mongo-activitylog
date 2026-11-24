@@ -1,48 +1,84 @@
 name: run-tests
 
 on:
-    push:
-    pull_request:
-    schedule:
-        - cron: "0 0 * * *"
+  push:
+  pull_request:
 
 jobs:
-    test:
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                php: [8.2, 8.1, 8.0, 8.2]
-                laravel: ["^10.0", "^9.0", "^8.0"]
-                dependency-version: [prefer-lowest, prefer-stable]
-                exclude:
-                    -   laravel: "^10.0"
-                        php: 8.0
+  test:
+    if: "github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository"
 
-        name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.dependency-version }}
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v3
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          MONGO_INITDB_DATABASE: activitylog_test
 
-            - name: Cache dependencies
-              uses: actions/cache@v3
-              with:
-                  path: ~/.composer/cache/files
-                  key: dependencies-laravel-${{ matrix.laravel }}-php-${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: '8.1'
+            laravel: ^10.48.10
+            testbench: ^8.23
+            pest: ^2.34
+            dependency-version: prefer-lowest
+          - php: '8.2'
+            laravel: ^11.0
+            testbench: ^9.0
+            pest: ^3.0
+            dependency-version: prefer-stable
+          - php: '8.3'
+            laravel: ^12.0
+            testbench: ^10.0
+            pest: ^4.0
+            dependency-version: prefer-stable
+          - php: '8.4'
+            laravel: ^13.0
+            testbench: ^11.0
+            pest: ^5.0
+            dependency-version: prefer-stable
 
-            - name: Setup PHP
-              uses: shivammathur/setup-php@v2
-              with:
-                  php-version: ${{ matrix.php }}
-                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, mysql, mysqli, pdo_mysql, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
-                  coverage: none
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - Pest ${{ matrix.pest }} - ${{ matrix.dependency-version }}
 
-            - name: Install dependencies
-              run: |
-                  composer require "laravel/framework:${{ matrix.laravel }}" "nesbot/carbon:^2.63" --dev --no-interaction --no-update
-                  composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
 
-            - name: Execute tests
-              run: vendor/bin/pest
+      - name: Start MongoDB replica set
+        run: |
+          docker exec ${{ job.services.mongodb.id }} mongosh --quiet --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
+          docker exec ${{ job.services.mongodb.id }} mongosh --quiet --eval 'while (!db.hello().isWritablePrimary) { sleep(1000) }'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, bcmath, soap, intl, gd, exif, iconv, fileinfo, mongodb
+          coverage: none
+
+      - name: Verify PHP version
+        env:
+          EXPECTED_PHP_VERSION: ${{ matrix.php }}
+        run: |
+          php -r 'echo PHP_VERSION, PHP_EOL; exit(PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION === getenv("EXPECTED_PHP_VERSION") ? 0 : 1);'
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "pestphp/pest:${{ matrix.pest }}" --dev --no-interaction --no-update
+          composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-security-blocking
+
+      - name: Execute tests
+        env:
+          MONGODB_URI: mongodb://127.0.0.1:27017
+          MONGODB_DATABASE: activitylog_test
+        run: vendor/bin/pest

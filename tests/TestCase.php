@@ -2,12 +2,9 @@
 
 namespace Spatie\Activitylog\Test;
 
-use AddBatchUuidColumnToActivityLogTable;
-use AddEventColumnToActivityLogTable;
-use CreateActivityLogTable;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\Schema;
+use MongoDB\Laravel\MongoDBServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\Activitylog\Models\Activity;
@@ -26,18 +23,23 @@ abstract class TestCase extends OrchestraTestCase
     protected function getPackageProviders($app)
     {
         return [
+            MongoDBServiceProvider::class,
             ActivitylogServiceProvider::class,
         ];
     }
 
     public function getEnvironmentSetUp($app): void
     {
-        config()->set('activitylog.database_connection', 'sqlite');
-        config()->set('database.default', 'sqlite');
-        config()->set('database.connections.sqlite', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-        ]);
+        $mongoConnection = [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGODB_URI', 'mongodb://127.0.0.1:27017'),
+            'database' => env('MONGODB_DATABASE', 'activitylog_test'),
+        ];
+
+        config()->set('database.default', 'mongodb');
+        config()->set('database.connections.mongodb', $mongoConnection);
+        config()->set('database.connections.custom_connection_name', $mongoConnection);
+        config()->set('database.connections.unrelated', $mongoConnection);
 
         config()->set('auth.providers.users.model', User::class);
         config()->set('app.key', 'base64:'.base64_encode(
@@ -47,6 +49,8 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function setUpDatabase(): void
     {
+        Schema::connection('mongodb')->dropAllTables();
+
         $this->migrateActivityLogTable();
 
         $this->createTables('articles', 'users');
@@ -55,34 +59,14 @@ abstract class TestCase extends OrchestraTestCase
 
     protected function migrateActivityLogTable(): void
     {
-        require_once __DIR__.'/../database/migrations/create_activity_log_table.php.stub';
-        require_once __DIR__.'/../database/migrations/add_event_column_to_activity_log_table.php.stub';
-        require_once __DIR__.'/../database/migrations/add_batch_uuid_column_to_activity_log_table.php.stub';
-
-        (new CreateActivityLogTable())->up();
-        (new AddEventColumnToActivityLogTable())->up();
-        (new AddBatchUuidColumnToActivityLogTable())->up();
+        $migration = require __DIR__.'/../database/migrations/create_activity_log_table.php.stub';
+        $migration->up();
     }
 
     protected function createTables(...$tableNames): void
     {
         collect($tableNames)->each(function (string $tableName): void {
-            Schema::create($tableName, function (Blueprint $table) use ($tableName): void {
-                $table->increments('id');
-                $table->string('name')->nullable();
-                $table->string('text')->nullable();
-                $table->timestamps();
-                $table->softDeletes();
-
-                if ($tableName === 'articles') {
-                    $table->integer('user_id')->unsigned()->nullable();
-                    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-                    $table->text('json')->nullable();
-                    $table->string('interval')->nullable();
-                    $table->decimal('price')->nullable();
-                    $table->string('status')->nullable();
-                }
-            });
+            Schema::connection('mongodb')->create($tableName);
         });
     }
 
@@ -90,7 +74,7 @@ abstract class TestCase extends OrchestraTestCase
     {
         collect($modelClasses)->each(function (string $modelClass): void {
             foreach (range(1, 0) as $index) {
-                $modelClass::create(['name' => "name {$index}"]);
+                $modelClass::create(['_id' => $index, 'name' => "name {$index}"]);
             }
         });
     }
